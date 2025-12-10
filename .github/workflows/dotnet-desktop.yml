@@ -18,7 +18,7 @@ jobs:
       contents: write            # allow release-action to create GitHub Release
 
     env:
-      Solution_Name: RedLightForWindows.sln
+      Solution_Name: RedLightForWindows.slnx
       Configuration: Release
 
     steps:
