@@ -1,0 +1,103 @@
+name: RedLightForWindows CI
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: read
+
+jobs:
+  # --------------------------------------------------------
+  # Release build for pushes & tags on main
+  # --------------------------------------------------------
+  build-release:
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    permissions:
+      contents: write            # allow release-action to create GitHub Release
+
+    env:
+      Solution_Name: RedLightForWindows.sln
+      Configuration: Release
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+        cache: true
+        cache-dependency-path: '**/*.csproj'
+
+    - name: Restore dependencies
+      run: dotnet restore RedLightForWindows.csproj
+
+    - name: Build (Release)
+      run: dotnet build RedLightForWindows.csproj --configuration ${{ env.Configuration }} --no-restore -p:Version=${{ github.run_number }}
+
+    - name: Publish self-contained
+      run: dotnet publish RedLightForWindows.csproj --configuration ${{ env.Configuration }} --runtime win-x64 --self-contained false --output ./publish -p:Version=${{ github.run_number }}
+
+    - name: Compress artifact
+      shell: pwsh
+      run: Compress-Archive -Path ./publish/* -DestinationPath RedLightForWindows.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: RedLightForWindows
+        path: RedLightForWindows.zip
+
+    - name: Create GitHub Release (tag push)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: |
+          RedLightForWindows.zip
+          publish/RedLightForWindows.exe
+        body: "Automated release from GitHub Actions"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  # --------------------------------------------------------
+  # Static code analysis with CodeQL
+  # --------------------------------------------------------
+  codeql:
+    name: CodeQL
+    runs-on: windows-latest
+    permissions:
+      security-events: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v3
+
+  # --------------------------------------------------------
+  # Secret scanning with Gitleaks
+  # --------------------------------------------------------
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      with:
+        fail: true

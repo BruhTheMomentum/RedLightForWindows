@@ -1,0 +1,42 @@
+﻿<Window x:Class="RedLight.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RedLight"
+        mc:Ignorable="d"
+        Title="Red Light" Height="300" Width="400"
+        Closing="Window_Closing">
+    <Window.Resources>
+        <Style x:Key="ColorPickerPanelStyle" TargetType="StackPanel">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ElementName=FilterTypeComboBox, Path=SelectedItem.Content}" Value="Color Tint">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="10">
+        <StackPanel>
+            <CheckBox x:Name="EnableFilterCheckBox" Content="Enable Fullscreen Filter" Margin="5" Checked="ApplyFilter" Unchecked="ApplyFilter"/>
+            <TextBlock Text="Filter Type:" Margin="5,10,5,0"/>
+            <ComboBox x:Name="FilterTypeComboBox" Margin="5" SelectionChanged="ApplyFilter">
+                <ComboBoxItem Content="Red" IsSelected="True"/>
+                <ComboBoxItem Content="Grayscale"/>
+                <ComboBoxItem Content="Red/Green (Protanopia)"/>
+                <ComboBoxItem Content="Green/Red (Deuteranopia)"/>
+                <ComboBoxItem Content="Blue/Yellow (Tritanopia)"/>
+                <ComboBoxItem Content="Color Tint"/>
+            </ComboBox>
+            <TextBlock Text="Intensity:" Margin="5,10,5,0"/>
+            <Slider x:Name="IntensitySlider" Minimum="0" Maximum="1" Value="1" Margin="5" ValueChanged="IntensitySlider_ValueChanged"/>
+            
+            <StackPanel Orientation="Horizontal" Margin="5" Style="{StaticResource ColorPickerPanelStyle}">
+                <Button x:Name="ColorPickerButton" Content="Choose Tint Color" Click="ColorPickerButton_Click" />
+                <Rectangle x:Name="ColorPreview" Width="100" Height="20" Fill="Red" Margin="10,0,0,0" Stroke="Black" StrokeThickness="1"/>
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</Window>
