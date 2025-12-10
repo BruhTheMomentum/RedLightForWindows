@@ -31,8 +31,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-        cache: true
-        cache-dependency-path: '**/*.csproj'
 
     - name: Restore dependencies
       run: dotnet restore RedLightForWindows.csproj
@@ -57,9 +55,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       uses: ncipollo/release-action@v1
       with:
-        artifacts: |
-          RedLightForWindows.zip
-          publish/RedLightForWindows.exe
+        artifacts: "RedLightForWindows.zip"
         body: "Automated release from GitHub Actions"
         token: ${{ secrets.GITHUB_TOKEN }}
 
