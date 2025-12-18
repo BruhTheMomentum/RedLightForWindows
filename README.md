@@ -4,7 +4,7 @@ RedLight is a lightweight Windows utility that applies a customizable full-scree
 
 ## 📥 Download
 
-You can download the latest standalone executable (`RedLightForWindows.exe`) from the **[Releases](../../releases)** page.
+You can download the latest (`RedLightForWindows.zip`) from the **[Releases](../../releases)** page.
 
 ## Features
 
