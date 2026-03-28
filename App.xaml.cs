@@ -1,14 +1,12 @@
-﻿using System;
-using System.Windows;
-using WinForms = System.Windows.Forms;
 using System.Drawing;
+using WinForms = System.Windows.Forms;
+using System.Windows;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace RedLight;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
-public partial class App : System.Windows.Application
+public partial class App : Application
 {
     private WinForms.NotifyIcon? _notifyIcon;
     private MainWindow? _mainWindow;
@@ -16,6 +14,7 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        ThemeManager.ApplySystemTheme();
 
         try
         {
@@ -23,40 +22,27 @@ public partial class App : System.Windows.Application
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Failed to initialize Magnification API: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Failed to initialize Magnification API: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
             return;
         }
 
         _mainWindow = new MainWindow();
-        _mainWindow.Show();
 
         _notifyIcon = new WinForms.NotifyIcon();
-        _notifyIcon.Icon = new Icon("icon.ico");
+        using var iconStream = typeof(App).Assembly
+            .GetManifestResourceStream("RedLightForWindows.icon.ico");
+        _notifyIcon.Icon = new Icon(iconStream!);
         _notifyIcon.Text = "Red Light";
         _notifyIcon.Visible = true;
 
-        var contextMenu = new WinForms.ContextMenuStrip();
-        contextMenu.Items.Add("Show", null, Show_Click);
-        contextMenu.Items.Add("Exit", null, Exit_Click);
-        _notifyIcon.ContextMenuStrip = contextMenu;
-        _notifyIcon.DoubleClick += Show_Click;
-    }
-
-    private void Show_Click(object? sender, EventArgs e)
-    {
-        if (_mainWindow == null)
+        _notifyIcon.MouseClick += (s, args) =>
         {
-            _mainWindow = new MainWindow();
-        }
-        _mainWindow.Show();
-        _mainWindow.WindowState = WindowState.Normal;
-        _mainWindow.Activate();
-    }
-
-    private void Exit_Click(object? sender, EventArgs e)
-    {
-        Shutdown();
+            if (_mainWindow!.IsVisible)
+                _mainWindow.HidePopup();
+            else
+                _mainWindow.ShowPopup();
+        };
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -69,25 +55,13 @@ public partial class App : System.Windows.Application
 
         try
         {
-            // Reset to identity matrix to remove any color effect
-            var identity = new float[]
-            {
-                1, 0, 0, 0, 0,
-                0, 1, 0, 0, 0,
-                0, 0, 1, 0, 0,
-                0, 0, 0, 1, 0,
-                0, 0, 0, 0, 1
-            };
-            var effect = new NativeMethods.MagColorEffect(identity);
-            NativeMethods.MagSetFullscreenColorEffect(ref effect);
-
+            NativeMethods.ResetColorEffect();
             NativeMethods.MagUninitialize();
         }
-        catch (Exception)
+        catch
         {
             // Suppress errors on exit
         }
         base.OnExit(e);
     }
 }
-
